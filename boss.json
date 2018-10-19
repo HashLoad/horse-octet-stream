@@ -1,0 +1,13 @@
+{
+	"name": "horse-octet-stream",
+	"description": "",
+	"version": "1.0.0",
+	"private": false,
+	"homepage": "",
+	"mainsrc": "src/",
+	"supported": "xe+",
+	"dprojFile": "",
+	"dependencies": {
+		"github.com/hashload/horse": "^1.6.1"
+	}
+}

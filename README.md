@@ -6,10 +6,10 @@ Middleware for work with application/octet-stream in HORSE
 $ boss install github.com/HashLoad/horse-octet-stream
 ```
 
-### Sample Horse Server with octet-steam middleware
+### Sample Horse Server with octet-stream middleware
 ```delphi
 uses
-  Horse, Horse.OctetStrem;
+  Horse, Horse.OctetStream;
 
 var
   App: THorse;
@@ -17,15 +17,15 @@ var
 begin
   App := THorse.Create(9000);
   
-  App.Use(OctetStrem);
+  App.Use(OctetStream);
   
   App.Post('marco',
     procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
     var 
-      LStrem: TFileStream;
+      LStream: TFileStream;
     begin
-      LStrem := TFileStream.Create('c:\sample\demo.txt', fmOpenRead);
-      Res.Send<TStrem>(LStrem);
+      LStream := TFileStream.Create('c:\sample\demo.txt', fmOpenRead);
+      Res.Send<TStream>(LStream);
     end);
 
   App.Start;

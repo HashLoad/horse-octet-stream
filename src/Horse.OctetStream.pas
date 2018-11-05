@@ -7,9 +7,14 @@ uses
 
 type
   TFileReturn = class
-    Stream: TStream;
-    Name: string;
-  end;
+  private
+    FName: string;
+    FStream: TStream;
+  public
+    property Stream: TStream read FStream write FStream;
+    property Name: string read FName write FName;
+    constructor Create(AName: string; AStream: TStream);
+  End;
 
 procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: TProc);
 
@@ -17,25 +22,6 @@ implementation
 
 uses
   Web.HTTPApp;
-
-function StreamToString(aStream: TStream): string;
-var
-  SS: TStringStream;
-begin
-  if aStream <> nil then
-  begin
-    SS := TStringStream.Create('');
-    try
-      SS.CopyFrom(aStream, 0);  // No need to position at 0 nor provide size
-      Result := SS.DataString;
-    finally
-      SS.Free;
-    end;
-  end else
-  begin
-    Result := '';
-  end;
-end;
 
 procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: TProc);
 var
@@ -49,7 +35,6 @@ begin
   if (LWebRequest.MethodType in [mtPost, mtPut]) and
     (LWebRequest.ContentType = 'application/octet-stream') then
   begin
-
     LContent := TMemoryStream.Create;
     LWriter := TBinaryWriter.Create(TStream(LContent));
     LWriter.Write(LWebRequest.RawContent);
@@ -60,26 +45,34 @@ begin
 
   LWebResponse := THorseHackResponse(Res).GetWebResponse;
   LContent := THorseHackResponse(Res).GetContent;
-   if Assigned(LContent) and LContent.InheritsFrom(TStream) then
-  begin
-    LWebResponse.ContentType := 'application/octet-stream';
-    LWebResponse.SetCustomHeader('Content-Disposition','attachment; filename="file"');
-    LWebResponse.ContentLength := TStream(LContent).Size;
-    LWebResponse.Content := StreamToString(TStream(LContent));
-    LContent.Free;
-  end;
-   if Assigned(LContent) and LContent.InheritsFrom(TFileReturn) then
-  begin
-    LWebResponse.ContentType := 'application/octet-stream';
-    LWebResponse.SetCustomHeader('Content-Disposition','attachment; '+
-      'filename="' + TFileReturn(LContent).Name + '"');
-    LWebResponse.ContentLength := TFileReturn(LContent).Stream.Size;
-    LWebResponse.Content := StreamToString(TFileReturn(LContent).Stream);
-    LContent.Free;
-  end;
-  TFileReturn
 
+  if Assigned(LContent) and LContent.InheritsFrom(TStream) then
+    begin
+    LWebResponse.ContentType := 'application/octet-stream';
+    LWebResponse.SetCustomHeader('Content-Disposition',
+      'attachment; filename="pong.xlsx"');
+    LWebResponse.ContentStream := TStream(TStream);
+    LWebResponse.SendResponse;
+    LContent.Free;
+  end;
+
+  if Assigned(LContent) and LContent.InheritsFrom(TFileReturn) then
+  begin
+    LWebResponse.ContentType := 'application/octet-stream';
+    LWebResponse.SetCustomHeader('Content-Disposition',
+      'attachment; ' + 'filename="' + TFileReturn(LContent).Name + '"');
+    LWebResponse.ContentStream := TFileReturn(LContent).Stream;
+    LWebResponse.SendResponse;
+    LContent.Free;
+  end;
 end;
 
+{ TFileReturn }
+
+constructor TFileReturn.Create(AName: string; AStream: TStream);
+begin
+  Name := AName;
+  Stream := AStream;
+end;
 
 end.

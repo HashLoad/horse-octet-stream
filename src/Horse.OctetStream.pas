@@ -51,7 +51,7 @@ begin
     LWebResponse.ContentType := 'application/octet-stream';
     LWebResponse.SetCustomHeader('Content-Disposition',
       'attachment; filename="pong.xlsx"');
-    LWebResponse.ContentStream := TStream(TStream);
+    LWebResponse.ContentStream := TStream(LContent);
     LWebResponse.SendResponse;
     LContent.Free;
   end;

@@ -63,7 +63,6 @@ begin
       'attachment; ' + 'filename="' + TFileReturn(LContent).Name + '"');
     LWebResponse.ContentStream := TFileReturn(LContent).Stream;
     LWebResponse.SendResponse;
-    LContent.Free;
   end;
 end;
 

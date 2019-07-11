@@ -2,8 +2,7 @@ unit Horse.OctetStream;
 
 interface
 
-uses
-  System.SysUtils, Horse, System.Classes;
+uses System.SysUtils, Horse, System.Classes;
 
 type
   TFileReturn = class
@@ -20,10 +19,11 @@ procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: TProc);
 
 implementation
 
-uses
-  Web.HTTPApp;
+uses Web.HTTPApp;
 
 procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: TProc);
+const
+  CONTENT_TYPE = 'application/octet-stream';
 var
   LWebRequest: TWebRequest;
   LWebResponse: TWebResponse;
@@ -32,8 +32,7 @@ var
 begin
   LWebRequest := THorseHackRequest(Req).GetWebRequest;
 
-  if (LWebRequest.MethodType in [mtPost, mtPut]) and
-    (LWebRequest.ContentType = 'application/octet-stream') then
+  if (LWebRequest.MethodType in [mtPost, mtPut]) and (LWebRequest.ContentType = CONTENT_TYPE) then
   begin
     LContent := TMemoryStream.Create;
     LWriter := TBinaryWriter.Create(TStream(LContent));
@@ -48,9 +47,8 @@ begin
 
   if Assigned(LContent) and LContent.InheritsFrom(TStream) then
     begin
-    LWebResponse.ContentType := 'application/octet-stream';
-    LWebResponse.SetCustomHeader('Content-Disposition',
-      'attachment; filename="pong.xlsx"');
+    LWebResponse.ContentType := CONTENT_TYPE;
+    LWebResponse.SetCustomHeader('Content-Disposition', 'attachment');
     LWebResponse.ContentStream := TStream(LContent);
     LWebResponse.SendResponse;
     LContent.Free;
@@ -58,9 +56,8 @@ begin
 
   if Assigned(LContent) and LContent.InheritsFrom(TFileReturn) then
   begin
-    LWebResponse.ContentType := 'application/octet-stream';
-    LWebResponse.SetCustomHeader('Content-Disposition',
-      'attachment; ' + 'filename="' + TFileReturn(LContent).Name + '"');
+    LWebResponse.ContentType := CONTENT_TYPE;
+    LWebResponse.SetCustomHeader('Content-Disposition', 'attachment; ' + 'filename="' + TFileReturn(LContent).Name + '"');
     LWebResponse.ContentStream := TFileReturn(LContent).Stream;
     LWebResponse.SendResponse;
   end;

@@ -19,7 +19,28 @@ procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: TProc);
 
 implementation
 
-uses Web.HTTPApp;
+uses Web.HTTPApp, System.Math;
+
+procedure GetAllDataAsStream(ARequest: TWebRequest; AStream: TMemoryStream);
+var
+  BytesRead, ContentLength: Integer;
+  Buffer: array [0 .. 1023] of Byte;
+begin
+  AStream.Clear;
+
+  ARequest.ReadTotalContent;
+  ContentLength := ARequest.ContentLength;
+  while ContentLength > 0 do
+  begin
+    BytesRead := ARequest.ReadClient(Buffer[0],
+      Min(ContentLength, SizeOf(Buffer)));
+    if BytesRead < 1 then
+      Break;
+    AStream.WriteBuffer(Buffer[0], BytesRead);
+    Dec(ContentLength, BytesRead);
+  end;
+  AStream.Position := 0;
+end;
 
 procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: TProc);
 const
@@ -28,15 +49,14 @@ var
   LWebRequest: TWebRequest;
   LWebResponse: TWebResponse;
   LContent: TObject;
-  LWriter: TBinaryWriter;
 begin
   LWebRequest := THorseHackRequest(Req).GetWebRequest;
 
-  if (LWebRequest.MethodType in [mtPost, mtPut]) and (LWebRequest.ContentType = CONTENT_TYPE) then
+  if (LWebRequest.MethodType in [mtPost, mtPut]) and
+    (LWebRequest.ContentType = CONTENT_TYPE) then
   begin
     LContent := TMemoryStream.Create;
-    LWriter := TBinaryWriter.Create(TStream(LContent));
-    LWriter.Write(LWebRequest.RawContent);
+    GetAllDataAsStream(LWebRequest, TMemoryStream(LContent));
     THorseHackRequest(Req).SetBody(LContent);
   end;
 
@@ -46,7 +66,7 @@ begin
   LContent := THorseHackResponse(Res).GetContent;
 
   if Assigned(LContent) and LContent.InheritsFrom(TStream) then
-    begin
+  begin
     LWebResponse.ContentType := CONTENT_TYPE;
     LWebResponse.SetCustomHeader('Content-Disposition', 'attachment');
     LWebResponse.ContentStream := TStream(LContent);
@@ -57,7 +77,8 @@ begin
   if Assigned(LContent) and LContent.InheritsFrom(TFileReturn) then
   begin
     LWebResponse.ContentType := CONTENT_TYPE;
-    LWebResponse.SetCustomHeader('Content-Disposition', 'attachment; ' + 'filename="' + TFileReturn(LContent).Name + '"');
+    LWebResponse.SetCustomHeader('Content-Disposition',
+      'attachment; ' + 'filename="' + TFileReturn(LContent).Name + '"');
     LWebResponse.ContentStream := TFileReturn(LContent).Stream;
     LWebResponse.SendResponse;
   end;

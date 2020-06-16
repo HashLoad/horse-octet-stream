@@ -69,9 +69,9 @@ begin
   begin
     LWebResponse.ContentType := CONTENT_TYPE;
     LWebResponse.SetCustomHeader('Content-Disposition', 'attachment');
+    LWebResponse.FreeContentStream := false;
     LWebResponse.ContentStream := TStream(LContent);
     LWebResponse.SendResponse;
-    LContent.Free;
   end;
 
   if Assigned(LContent) and LContent.InheritsFrom(TFileReturn) then

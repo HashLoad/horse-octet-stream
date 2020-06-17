@@ -23,7 +23,7 @@ begin
     var
       LStream: TFileStream;
     begin
-      LStream := TFileStream.Create('D:\Embarcadero Conference\2019\samples-octet-stream\horse.pdf', fmOpenRead);
+      LStream := TFileStream.Create(ExtractFilePath(ParamStr(0)) + 'horse.pdf', fmOpenRead);
       Res.Send(LStream);
     end);
 

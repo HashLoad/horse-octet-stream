@@ -6,18 +6,9 @@ uses
   Horse,
   Horse.OctetStream,
   System.Classes,
-  System.SysUtils,
-  Winapi.Windows;
+  System.SysUtils;
 
 {$R *.res}
-
-function GetPath: string;
-begin
-  SetLength(Result, MAX_PATH+1);
-  GetModuleFileName(hInstance, PChar(Result), MAX_PATH+1);
-  SetLength(Result, Length(PChar(Result)));
-  Result := IncludeTrailingPathDelimiter(ExtractFilePath(Result));
-end;
 
 var
   App: THorse;
@@ -32,7 +23,7 @@ begin
     var
       LStream: TFileStream;
     begin
-      LStream := TFileStream.Create(GetPath + 'horse.pdf', fmOpenRead);
+      LStream := TFileStream.Create(ExtractFilePath(ParamStr(0)) + 'horse.pdf', fmOpenRead);
       Res.Send(LStream);
     end);
 

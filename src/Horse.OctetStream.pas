@@ -11,8 +11,8 @@ type
     FStream: TStream;
     FInline: Boolean;
   public
-    property Stream : TStream read FStream write FStream;
-    property Name : string read FName write FName;
+    property Stream: TStream read FStream write FStream;
+    property Name: string read FName write FName;
     property &Inline: Boolean read FInline write FInline;
     constructor Create(AName: string; AStream: TStream; const AInline: Boolean = False); reintroduce;
   end;

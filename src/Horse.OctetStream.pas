@@ -7,15 +7,15 @@ uses System.SysUtils, Horse, System.Classes;
 type
   TFileReturn = class
   private
-    FName  : string;
+    FName: string;
     FStream: TStream;
     FInline: Boolean;
   public
     property Stream : TStream read FStream write FStream;
-    property Name   : string read FName write FName;
+    property Name : string read FName write FName;
     property &Inline: Boolean read FInline write FInline;
     constructor Create(AName: string; AStream: TStream; const AInline: Boolean = False); reintroduce;
-  End;
+  end;
 
 procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: TProc);
 
@@ -26,7 +26,7 @@ uses Web.HTTPApp, System.Math;
 procedure GetAllDataAsStream(ARequest: TWebRequest; AStream: TMemoryStream);
 var
   BytesRead, ContentLength: Integer;
-  Buffer                  : array [0 .. 1023] of Byte;
+  Buffer: array [0 .. 1023] of Byte;
 begin
   AStream.Clear;
 
@@ -39,17 +39,17 @@ begin
       Break;
     AStream.WriteBuffer(Buffer[0], BytesRead);
     Dec(ContentLength, BytesRead);
-  End;
+  end;
   AStream.Position := 0;
-End;
+end;
 
 procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: TProc);
 const
   CONTENT_TYPE = 'application/octet-stream';
 var
-  LWebRequest : TWebRequest;
+  LWebRequest: TWebRequest;
   LWebResponse: TWebResponse;
-  LContent    : TObject;
+  LContent: TObject;
 begin
   LWebRequest := THorseHackRequest(Req).GetWebRequest;
 
@@ -58,32 +58,32 @@ begin
     LContent := TMemoryStream.Create;
     GetAllDataAsStream(LWebRequest, TMemoryStream(LContent));
     THorseHackRequest(Req).SetBody(LContent);
-  End;
+  end;
 
   Next;
 
   LWebResponse := THorseHackResponse(Res).GetWebResponse;
-  LContent     := THorseHackResponse(Res).GetContent;
+  LContent := THorseHackResponse(Res).GetContent;
 
   if Assigned(LContent) and LContent.InheritsFrom(TStream) then
   begin
     if LWebResponse.ContentType.Trim.IsEmpty then
     begin
       LWebResponse.ContentType := CONTENT_TYPE;
-    End;
+    end;
 
     LWebResponse.SetCustomHeader('Content-Disposition', 'attachment');
     LWebResponse.FreeContentStream := False;
-    LWebResponse.ContentStream     := TStream(LContent);
+    LWebResponse.ContentStream := TStream(LContent);
     LWebResponse.SendResponse;
-  End;
+  end;
 
   if Assigned(LContent) and LContent.InheritsFrom(TFileReturn) then
   begin
     if LWebResponse.ContentType.Trim.IsEmpty then
     begin
       LWebResponse.ContentType := CONTENT_TYPE;
-    End;
+    end;
 
     if TFileReturn(LContent).&Inline then
     begin
@@ -92,20 +92,20 @@ begin
     else
     begin
       LWebResponse.SetCustomHeader('Content-Disposition', 'attachment; ' + 'filename="' + TFileReturn(LContent).Name + '"');
-    End;
+    end;
 
     LWebResponse.ContentStream := TFileReturn(LContent).Stream;
     LWebResponse.SendResponse;
-  End;
-End;
+  end;
+end;
 
 { TFileReturn }
 
 constructor TFileReturn.Create(AName: string; AStream: TStream; const AInline: Boolean = False);
 begin
-  Name    := AName;
-  Stream  := AStream;
+  Name := AName;
+  Stream := AStream;
   &Inline := AInline;
-End;
+end;
 
 End.

@@ -88,7 +88,7 @@ begin
     if TFileReturn(LContent).&Inline then
     begin
       LWebResponse.SetCustomHeader('Content-Disposition', 'inline; ' + 'filename="' + TFileReturn(LContent).Name + '"');
-    End
+    end
     else
     begin
       LWebResponse.SetCustomHeader('Content-Disposition', 'attachment; ' + 'filename="' + TFileReturn(LContent).Name + '"');

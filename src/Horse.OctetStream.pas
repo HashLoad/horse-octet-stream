@@ -67,7 +67,7 @@ begin
 
   if Assigned(LContent) and LContent.InheritsFrom(TStream) then
   begin
-    if LWebResponse.ContentType.Trim.IsEmpty then
+    if Trim(LWebResponse.ContentType).IsEmpty then
     begin
       LWebResponse.ContentType := CONTENT_TYPE;
     end;
@@ -80,7 +80,7 @@ begin
 
   if Assigned(LContent) and LContent.InheritsFrom(TFileReturn) then
   begin
-    if LWebResponse.ContentType.Trim.IsEmpty then
+    if Trim(LWebResponse.ContentType).IsEmpty then
     begin
       LWebResponse.ContentType := CONTENT_TYPE;
     end;

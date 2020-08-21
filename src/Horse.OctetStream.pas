@@ -2,7 +2,13 @@ unit Horse.OctetStream;
 
 interface
 
-uses System.SysUtils, Horse, System.Classes;
+uses
+  {$IF DEFINED(FPC)}
+    SysUtils, Classes,
+  {$ELSE}
+    System.SysUtils, System.Classes,
+  {$ENDIF}
+  Horse, Horse.Commons;
 
 type
   TFileReturn = class
@@ -17,20 +23,34 @@ type
     constructor Create(AName: string; AStream: TStream; const AInline: Boolean = False); reintroduce;
   end;
 
-procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: TProc);
+procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: {$IF DEFINED(FPC)}TNextProc{$ELSE}  TProc {$ENDIF});
 
 implementation
 
-uses Web.HTTPApp, System.Math;
+uses
+  {$IF DEFINED(FPC)}
+    httpdefs, Math;
+  {$ELSE}
+    Web.HTTPApp, System.Math;
+  {$ENDIF}
 
-procedure GetAllDataAsStream(ARequest: TWebRequest; AStream: TMemoryStream);
+procedure GetAllDataAsStream(ARequest: {$IF DEFINED(FPC)}TRequest{$ELSE}  TWebRequest {$ENDIF}; AStream: TMemoryStream);
 var
   BytesRead, ContentLength: Integer;
   Buffer: array [0 .. 1023] of Byte;
+  LStringStream: TStringStream;
 begin
   AStream.Clear;
-
+  {$IF  DEFINED(FPC)}
+   LStringStream := TStringStream.Create(ARequest.Content);
+   try
+     LStringStream.SaveToStream(AStream);
+   finally
+     LStringStream.Free;
+   end;
+  {$ELSE}
   ARequest.ReadTotalContent;
+
   ContentLength := ARequest.ContentLength;
   while ContentLength > 0 do
   begin
@@ -40,23 +60,27 @@ begin
     AStream.WriteBuffer(Buffer[0], BytesRead);
     Dec(ContentLength, BytesRead);
   end;
+  {$ENDIF}
   AStream.Position := 0;
 end;
 
-procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: TProc);
+
+procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: {$IF DEFINED(FPC)}TNextProc{$ELSE}  TProc {$ENDIF});
 const
   CONTENT_TYPE = 'application/octet-stream';
 var
-  LWebRequest: TWebRequest;
-  LWebResponse: TWebResponse;
+  LWebRequest: {$IF DEFINED(FPC)}TRequest{$ELSE}  TWebRequest {$ENDIF};
+  LWebResponse: {$IF DEFINED(FPC)}TResponse{$ELSE}  TWebResponse {$ENDIF};
   LContent: TObject;
+  LContentTMemoryStream: TMemoryStream;
 begin
   LWebRequest := THorseHackRequest(Req).GetWebRequest;
 
-  if (LWebRequest.MethodType in [mtPost, mtPut]) and (LWebRequest.ContentType = CONTENT_TYPE) then
+  if ({$IF DEFINED(FPC)} StringCommandToMethodType(LWebRequest.Method) {$ELSE} LWebRequest.MethodType{$ENDIF} in [mtPost, mtPut]) and (LWebRequest.ContentType = CONTENT_TYPE) then
   begin
     LContent := TMemoryStream.Create;
-    GetAllDataAsStream(LWebRequest, TMemoryStream(LContent));
+    LContentTMemoryStream :=  TMemoryStream(LContent);
+    GetAllDataAsStream(LWebRequest, LContentTMemoryStream);
     THorseHackRequest(Req).SetBody(LContent);
   end;
 

@@ -9,24 +9,22 @@ $ boss install github.com/HashLoad/horse-octet-stream
 ### Sample Horse Server with octet-stream middleware
 ```delphi
 uses
-  Horse, Horse.OctetStream;
+  Horse, Horse.OctetStream, System.Classes, System.SysUtils;
 
-var
-  App: THorse;
 
 begin
-  App := THorse.Create(9000);
-  
-  App.Use(OctetStream);
-  
-  App.Post('marco',
+
+  THorse.Use(OctetStream);
+
+  THorse.Post('/mauricio',
     procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
-    var 
+    var
       LStream: TFileStream;
     begin
       LStream := TFileStream.Create('c:\sample\demo.txt', fmOpenRead);
       Res.Send<TStream>(LStream);
     end);
 
-  App.Start;
+  THorse.Listen(9000);
+end.
 ```

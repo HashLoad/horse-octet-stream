@@ -8,15 +8,12 @@ $ boss install github.com/HashLoad/horse-octet-stream
 
 ### Sample Horse Server with octet-stream middleware
 ```delphi
-uses
-  Horse, Horse.OctetStream, System.Classes, System.SysUtils;
-
+uses Horse, Horse.OctetStream, System.Classes, System.SysUtils;
 
 begin
-
   THorse.Use(OctetStream);
 
-  THorse.Post('/mauricio',
+  THorse.Post('/stream',
     procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
     var
       LStream: TFileStream;

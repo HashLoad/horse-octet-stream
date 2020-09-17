@@ -10,22 +10,17 @@ uses
 
 {$R *.res}
 
-var
-  App: THorse;
-
 begin
-  App := THorse.Create(9000);
+  THorse.Use(OctetStream);
 
-  App.Use(OctetStream);
-
-  App.Get('pdf',
+  THorse.Get('/stream',
     procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
     var
       LStream: TFileStream;
     begin
       LStream := TFileStream.Create(ExtractFilePath(ParamStr(0)) + 'horse.pdf', fmOpenRead);
-      Res.Send(LStream);
+      Res.Send<TStream>(LStream);
     end);
 
-  App.Start;
+  THorse.Listen(9000);
 end.

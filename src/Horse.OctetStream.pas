@@ -64,7 +64,6 @@ begin
   AStream.Position := 0;
 end;
 
-
 procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: {$IF DEFINED(FPC)}TNextProc{$ELSE}  TProc {$ENDIF});
 const
   CONTENT_TYPE = 'application/octet-stream';
@@ -132,4 +131,4 @@ begin
   &Inline := AInline;
 end;
 
-End.
+end.

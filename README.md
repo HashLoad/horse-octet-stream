@@ -13,7 +13,7 @@ uses Horse, Horse.OctetStream, System.Classes, System.SysUtils;
 begin
   THorse.Use(OctetStream);
 
-  THorse.Post('/stream',
+  THorse.Get('/stream',
     procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
     var
       LStream: TFileStream;

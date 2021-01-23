@@ -67,6 +67,7 @@ end;
 procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: {$IF DEFINED(FPC)}TNextProc{$ELSE}  TProc {$ENDIF});
 const
   CONTENT_TYPE = 'application/octet-stream';
+  CONTENT_DISPOSITION = 'Content-Disposition';
 var
   LWebRequest: {$IF DEFINED(FPC)}TRequest{$ELSE}  TWebRequest {$ENDIF};
   LWebResponse: {$IF DEFINED(FPC)}TResponse{$ELSE}  TWebResponse {$ENDIF};
@@ -95,8 +96,8 @@ begin
       LWebResponse.ContentType := CONTENT_TYPE;
     end;
 
-    if LWebResponse.GetCustomHeader('Content-Disposition').IsEmpty then
-      LWebResponse.SetCustomHeader('Content-Disposition', 'attachment');
+    if LWebResponse.GetCustomHeader(CONTENT_DISPOSITION).IsEmpty then
+      LWebResponse.SetCustomHeader(CONTENT_DISPOSITION, 'attachment');
     LWebResponse.FreeContentStream := False;
     LWebResponse.ContentStream := TStream(LContent);
     LWebResponse.SendResponse;
@@ -111,11 +112,11 @@ begin
 
     if TFileReturn(LContent).&Inline then
     begin
-      LWebResponse.SetCustomHeader('Content-Disposition', 'inline; ' + 'filename="' + TFileReturn(LContent).Name + '"');
+      LWebResponse.SetCustomHeader(CONTENT_DISPOSITION, 'inline; ' + 'filename="' + TFileReturn(LContent).Name + '"');
     end
     else
     begin
-      LWebResponse.SetCustomHeader('Content-Disposition', 'attachment; ' + 'filename="' + TFileReturn(LContent).Name + '"');
+      LWebResponse.SetCustomHeader(CONTENT_DISPOSITION, 'attachment; ' + 'filename="' + TFileReturn(LContent).Name + '"');
     end;
 
     LWebResponse.ContentStream := TFileReturn(LContent).Stream;

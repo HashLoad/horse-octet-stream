@@ -34,27 +34,29 @@ uses
     Web.HTTPApp, System.Math;
   {$ENDIF}
 
-procedure GetAllDataAsStream(ARequest: {$IF DEFINED(FPC)}TRequest{$ELSE}  TWebRequest {$ENDIF}; AStream: TMemoryStream);
+procedure GetAllDataAsStream(ARequest: THorseRequest; AStream: TMemoryStream);
 var
+{$IF NOT DEFINED(FPC)}
   BytesRead, ContentLength: Integer;
   Buffer: array [0 .. 1023] of Byte;
+{$ENDIF}
   LStringStream: TStringStream;
 begin
   AStream.Clear;
-  {$IF  DEFINED(FPC)}
-   LStringStream := TStringStream.Create(ARequest.Content);
+  {$IF DEFINED(FPC)}
+   LStringStream := TStringStream.Create(ARequest.RawWebRequest.Content);
    try
      LStringStream.SaveToStream(AStream);
    finally
      LStringStream.Free;
    end;
   {$ELSE}
-  ARequest.ReadTotalContent;
+  ARequest.RawWebRequest.ReadTotalContent;
 
-  ContentLength := ARequest.ContentLength;
+  ContentLength := ARequest.RawWebRequest.ContentLength;
   while ContentLength > 0 do
   begin
-    BytesRead := ARequest.ReadClient(Buffer[0], Min(ContentLength, SizeOf(Buffer)));
+    BytesRead := ARequest.RawWebRequest.ReadClient(Buffer[0], Min(ContentLength, SizeOf(Buffer)));
     if BytesRead < 1 then
       Break;
     AStream.WriteBuffer(Buffer[0], BytesRead);
@@ -69,58 +71,45 @@ const
   CONTENT_TYPE = 'application/octet-stream';
   CONTENT_DISPOSITION = 'Content-Disposition';
 var
-  LWebRequest: {$IF DEFINED(FPC)}TRequest{$ELSE}  TWebRequest {$ENDIF};
-  LWebResponse: {$IF DEFINED(FPC)}TResponse{$ELSE}  TWebResponse {$ENDIF};
   LContent: TObject;
   LContentTMemoryStream: TMemoryStream;
 begin
-  LWebRequest := THorseHackRequest(Req).GetWebRequest;
-
-  if ({$IF DEFINED(FPC)} StringCommandToMethodType(LWebRequest.Method) {$ELSE} LWebRequest.MethodType{$ENDIF} in [mtPost, mtPut]) and (LWebRequest.ContentType = CONTENT_TYPE) then
+  if (Req.MethodType in [mtPost, mtPut]) and (Req.RawWebRequest.ContentType = CONTENT_TYPE) then
   begin
     LContent := TMemoryStream.Create;
     LContentTMemoryStream :=  TMemoryStream(LContent);
-    GetAllDataAsStream(LWebRequest, LContentTMemoryStream);
-    THorseHackRequest(Req).SetBody(LContent);
+    GetAllDataAsStream(Req, LContentTMemoryStream);
+    Req.Body(LContent);
   end;
 
   Next;
 
-  LWebResponse := THorseHackResponse(Res).GetWebResponse;
-  LContent := THorseHackResponse(Res).GetContent;
+  LContent := Res.Content;
 
   if Assigned(LContent) and LContent.InheritsFrom(TStream) then
   begin
-    if Trim(LWebResponse.ContentType).IsEmpty then
-    begin
-      LWebResponse.ContentType := CONTENT_TYPE;
-    end;
+    if Trim(Res.RawWebResponse.ContentType).IsEmpty then
+      Res.ContentType(CONTENT_TYPE);
 
-    if LWebResponse.GetCustomHeader(CONTENT_DISPOSITION).IsEmpty then
-      LWebResponse.SetCustomHeader(CONTENT_DISPOSITION, 'attachment');
-    LWebResponse.FreeContentStream := False;
-    LWebResponse.ContentStream := TStream(LContent);
-    LWebResponse.SendResponse;
+    if Res.RawWebResponse.GetCustomHeader(CONTENT_DISPOSITION).IsEmpty then
+      Res.RawWebResponse.SetCustomHeader(CONTENT_DISPOSITION, 'attachment');
+    Res.RawWebResponse.FreeContentStream := False;
+    Res.RawWebResponse.ContentStream := TStream(LContent);
+    Res.RawWebResponse.SendResponse;
   end;
 
   if Assigned(LContent) and LContent.InheritsFrom(TFileReturn) then
   begin
-    if Trim(LWebResponse.ContentType).IsEmpty then
-    begin
-      LWebResponse.ContentType := CONTENT_TYPE;
-    end;
+    if Trim(Res.RawWebResponse.ContentType).IsEmpty then
+      Res.ContentType(CONTENT_TYPE);
 
     if TFileReturn(LContent).&Inline then
-    begin
-      LWebResponse.SetCustomHeader(CONTENT_DISPOSITION, 'inline; ' + 'filename="' + TFileReturn(LContent).Name + '"');
-    end
+      Res.RawWebResponse.SetCustomHeader(CONTENT_DISPOSITION, 'inline; ' + 'filename="' + TFileReturn(LContent).Name + '"')
     else
-    begin
-      LWebResponse.SetCustomHeader(CONTENT_DISPOSITION, 'attachment; ' + 'filename="' + TFileReturn(LContent).Name + '"');
-    end;
+      Res.RawWebResponse.SetCustomHeader(CONTENT_DISPOSITION, 'attachment; ' + 'filename="' + TFileReturn(LContent).Name + '"');
 
-    LWebResponse.ContentStream := TFileReturn(LContent).Stream;
-    LWebResponse.SendResponse;
+    Res.RawWebResponse.ContentStream := TFileReturn(LContent).Stream;
+    Res.RawWebResponse.SendResponse;
   end;
 end;
 

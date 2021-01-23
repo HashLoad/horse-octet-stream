@@ -95,7 +95,8 @@ begin
       LWebResponse.ContentType := CONTENT_TYPE;
     end;
 
-    LWebResponse.SetCustomHeader('Content-Disposition', 'attachment');
+    if LWebResponse.GetCustomHeader('Content-Disposition').IsEmpty then
+      LWebResponse.SetCustomHeader('Content-Disposition', 'attachment');
     LWebResponse.FreeContentStream := False;
     LWebResponse.ContentStream := TStream(LContent);
     LWebResponse.SendResponse;

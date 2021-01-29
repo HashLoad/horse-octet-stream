@@ -36,11 +36,12 @@ uses
 
 procedure GetAllDataAsStream(ARequest: THorseRequest; AStream: TMemoryStream);
 var
-{$IF NOT DEFINED(FPC)}
+{$IF DEFINED(FPC)}
+  LStringStream: TStringStream;
+{$ELSE}
   BytesRead, ContentLength: Integer;
   Buffer: array [0 .. 1023] of Byte;
 {$ENDIF}
-  LStringStream: TStringStream;
 begin
   AStream.Clear;
   {$IF DEFINED(FPC)}

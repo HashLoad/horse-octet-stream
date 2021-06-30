@@ -75,7 +75,7 @@ var
   LContent: TObject;
   LContentTMemoryStream: TMemoryStream;
 begin
-  if (Req.MethodType in [mtPost, mtPut]) and (Req.RawWebRequest.ContentType = CONTENT_TYPE) then
+  if (Req.MethodType in [mtPost, mtPut, mtPatch]) and (Req.RawWebRequest.ContentType = CONTENT_TYPE) then
   begin
     LContent := TMemoryStream.Create;
     LContentTMemoryStream :=  TMemoryStream(LContent);

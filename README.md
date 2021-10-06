@@ -1,16 +1,35 @@
 # horse-octet-stream
-Middleware for work with application/octet-stream in HORSE
+<b>horse-octet-stream</b> is a official middleware for working with Stream in APIs developed with the <a href="https://github.com/HashLoad/horse">Horse</a> framework.
+<br>We created a channel on Telegram for questions and support:<br><br>
+<a href="https://t.me/hashload">
+  <img src="https://img.shields.io/badge/telegram-join%20channel-7289DA?style=flat-square">
+</a>
 
-### For install in your project using [boss](https://github.com/HashLoad/boss):
+## ⚙️ Installation
+Installation is done using the [`boss install`](https://github.com/HashLoad/boss) command:
 ``` sh
-$ boss install github.com/HashLoad/horse-octet-stream
+$ boss install horse-octet-stream
+```
+If you choose to install manually, simply add the following folders to your project, in *Project > Options > Resource Compiler > Directories and Conditionals > Include file search path*
+```
+../horse-octet-stream/src
 ```
 
-### Sample Horse Server with octet-stream middleware
+## ✔️ Compatibility
+This middleware is compatible with projects developed in:
+- [X] Delphi
+- [X] Lazarus
+
+## ⚡️ Quickstart
 ```delphi
-uses Horse, Horse.OctetStream, System.Classes, System.SysUtils;
+uses
+  Horse,
+  Horse.OctetStream, // It's necessary to use the unit
+  System.Classes,
+  System.SysUtils;
 
 begin
+  // It's necessary to add the middleware in the Horse:
   THorse.Use(OctetStream);
 
   THorse.Get('/stream',
@@ -18,10 +37,14 @@ begin
     var
       LStream: TFileStream;
     begin
-      LStream := TFileStream.Create('c:\sample\demo.txt', fmOpenRead);
+      // Now you can send your stream:
+      LStream := TFileStream.Create(ExtractFilePath(ParamStr(0)) + 'horse.pdf', fmOpenRead);
       Res.Send<TStream>(LStream);
     end);
 
   THorse.Listen(9000);
-end.
+end;
 ```
+
+## ⚠️ License
+`horse-octet-stream` is free and open-source middleware licensed under the [MIT License](https://github.com/HashLoad/horse-octet-stream/blob/master/LICENSE). 

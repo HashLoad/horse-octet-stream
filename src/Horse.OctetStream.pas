@@ -45,14 +45,18 @@ var
 begin
   AStream.Clear;
   {$IF DEFINED(FPC)}
-   LStringStream := TStringStream.Create(ARequest.RawWebRequest.Content);
-   try
-     LStringStream.SaveToStream(AStream);
-   finally
-     LStringStream.Free;
-   end;
+  LStringStream := TStringStream.Create(ARequest.RawWebRequest.Content);
+  try
+    LStringStream.SaveToStream(AStream);
+  finally
+    LStringStream.Free;
+  end;
   {$ELSE}
-  ARequest.RawWebRequest.ReadTotalContent;
+  {$IF CompilerVersion <= 28}
+    Assert(Length(ARequest.RawWebRequest.RawContent) = ARequest.RawWebRequest.ContentLength);
+  {$ELSE}
+    ARequest.RawWebRequest.ReadTotalContent;
+  {$ENDIF}
 
   ContentLength := ARequest.RawWebRequest.ContentLength;
   while ContentLength > 0 do

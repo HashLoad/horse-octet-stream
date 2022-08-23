@@ -89,6 +89,8 @@ begin
 
   if Assigned(LContent) and LContent.InheritsFrom(TStream) then
   begin
+    TStream(LContent).Position := 0;
+
     if Trim(Res.RawWebResponse.ContentType).IsEmpty then
       Res.ContentType(CONTENT_TYPE);
 
@@ -101,6 +103,8 @@ begin
 
   if Assigned(LContent) and LContent.InheritsFrom(TFileReturn) then
   begin
+    TFileReturn(LContent).Stream.Position := 0;
+
     if Trim(Res.RawWebResponse.ContentType).IsEmpty then
       Res.ContentType(CONTENT_TYPE);
 

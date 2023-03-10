@@ -14,7 +14,7 @@ begin
   THorse.Use(OctetStream);
 
   THorse.Get('/stream',
-    procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
+    procedure(Req: THorseRequest; Res: THorseResponse)
     var
       LStream: TFileStream;
     begin

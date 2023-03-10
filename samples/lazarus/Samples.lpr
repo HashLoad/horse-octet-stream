@@ -10,7 +10,7 @@ uses
   Horse.OctetStream, // It's necessary to use the unit
   SysUtils, Classes;
 
-procedure GetStream(Req: THorseRequest; Res: THorseResponse; Next: TNextProc);
+procedure GetStream(Req: THorseRequest; Res: THorseResponse);
 var
   LStream: TFileStream;
 begin

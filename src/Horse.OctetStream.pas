@@ -4,13 +4,16 @@ interface
 
 uses
   {$IF DEFINED(FPC)}
-    SysUtils, Classes,
+    SysUtils, Classes,StrUtils,
   {$ELSE}
-    System.SysUtils, System.Classes,
+    System.SysUtils, System.Classes, System.StrUtils,
   {$ENDIF}
-  Horse, Horse.Commons;
+  Horse, Horse.Commons,
+  Horse.OctetStream.Config;
 
 type
+  THorseOctetStreamConfig = Horse.OctetStream.Config.THorseOctetStreamConfig;
+
   TFileReturn = class
   private
     FName: string;
@@ -76,11 +79,16 @@ const
   CONTENT_TYPE = 'application/octet-stream';
   CONTENT_DISPOSITION = 'Content-Disposition';
 var
+  LContentType: string;
   LContent: TObject;
   LContentTMemoryStream: TMemoryStream;
 begin
-  if (Req.MethodType in [mtPost, mtPut, mtPatch]) and (Req.RawWebRequest.ContentType = CONTENT_TYPE) then
+  LContentType := CONTENT_TYPE;
+  if (Req.MethodType in [mtPost, mtPut, mtPatch]) and
+  (MatchText(Req.RawWebRequest.ContentType, THorseOctetStreamConfig.GetInstance.AcceptContentType.ToArray))
+  then
   begin
+    LContentType := Req.RawWebRequest.ContentType;
     LContent := TMemoryStream.Create;
     LContentTMemoryStream :=  TMemoryStream(LContent);
     GetAllDataAsStream(Req, LContentTMemoryStream);
@@ -96,7 +104,7 @@ begin
     TStream(LContent).Position := 0;
 
     if Trim(Res.RawWebResponse.ContentType).IsEmpty then
-      Res.ContentType(CONTENT_TYPE);
+      Res.ContentType(LContentType);
 
     if Res.RawWebResponse.GetCustomHeader(CONTENT_DISPOSITION).IsEmpty then
       Res.RawWebResponse.SetCustomHeader(CONTENT_DISPOSITION, 'attachment');
@@ -110,7 +118,7 @@ begin
     TFileReturn(LContent).Stream.Position := 0;
 
     if Trim(Res.RawWebResponse.ContentType).IsEmpty then
-      Res.ContentType(CONTENT_TYPE);
+      Res.ContentType(LContentType);
 
     if TFileReturn(LContent).&Inline then
       Res.RawWebResponse.SetCustomHeader(CONTENT_DISPOSITION, 'inline; ' + 'filename="' + TFileReturn(LContent).Name + '"')

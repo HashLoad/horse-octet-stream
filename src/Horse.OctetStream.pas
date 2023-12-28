@@ -1,16 +1,32 @@
 unit Horse.OctetStream;
 
+{$IF DEFINED(FPC)}
+  {$MODE DELPHI}{$H+}
+{$ENDIF}
+
 interface
 
 uses
-  {$IF DEFINED(FPC)}
-    SysUtils, Classes,
-  {$ELSE}
-    System.SysUtils, System.Classes,
-  {$ENDIF}
-  Horse, Horse.Commons;
+{$IF DEFINED(FPC)}
+  SysUtils,
+  StrUtils,
+  Classes,
+  httpdefs,
+  Math,
+{$ELSE}
+  Web.HTTPApp,
+  System.Math,
+  System.SysUtils,
+  System.Classes,
+  System.StrUtils,
+{$ENDIF}
+  Horse,
+  Horse.Commons,
+  Horse.OctetStream.Config;
 
 type
+  THorseOctetStreamConfig = Horse.OctetStream.Config.THorseOctetStreamConfig;
+
   TFileReturn = class
   private
     FName: string;
@@ -26,13 +42,6 @@ type
 procedure OctetStream(Req: THorseRequest; Res: THorseResponse; Next: {$IF DEFINED(FPC)}TNextProc{$ELSE}  TProc {$ENDIF});
 
 implementation
-
-uses
-  {$IF DEFINED(FPC)}
-    httpdefs, Math;
-  {$ELSE}
-    Web.HTTPApp, System.Math;
-  {$ENDIF}
 
 procedure GetAllDataAsStream(ARequest: THorseRequest; AStream: TMemoryStream);
 var
@@ -52,21 +61,20 @@ begin
     LStringStream.Free;
   end;
   {$ELSE}
-  {$IF CompilerVersion <= 28}
-    Assert(Length(ARequest.RawWebRequest.RawContent) = ARequest.RawWebRequest.ContentLength);
-  {$ELSE}
-    ARequest.RawWebRequest.ReadTotalContent;
-  {$ENDIF}
-
-  ContentLength := ARequest.RawWebRequest.ContentLength;
-  while ContentLength > 0 do
-  begin
-    BytesRead := ARequest.RawWebRequest.ReadClient(Buffer[0], Min(ContentLength, SizeOf(Buffer)));
-    if BytesRead < 1 then
-      Break;
-    AStream.WriteBuffer(Buffer[0], BytesRead);
-    Dec(ContentLength, BytesRead);
-  end;
+    {$IF CompilerVersion <= 28}
+      Assert(Length(ARequest.RawWebRequest.RawContent) = ARequest.RawWebRequest.ContentLength);
+    {$ELSE}
+      ARequest.RawWebRequest.ReadTotalContent;
+    {$ENDIF}
+    ContentLength := ARequest.RawWebRequest.ContentLength;
+    while ContentLength > 0 do
+    begin
+      BytesRead := ARequest.RawWebRequest.ReadClient(Buffer[0], Min(ContentLength, SizeOf(Buffer)));
+      if BytesRead < 1 then
+        Break;
+      AStream.WriteBuffer(Buffer[0], BytesRead);
+      Dec(ContentLength, BytesRead);
+    end;
   {$ENDIF}
   AStream.Position := 0;
 end;
@@ -78,13 +86,25 @@ const
 var
   LContent: TObject;
   LContentTMemoryStream: TMemoryStream;
+  LContentType: string;
 begin
-  if (Req.MethodType in [mtPost, mtPut, mtPatch]) and (Req.RawWebRequest.ContentType = CONTENT_TYPE) then
+  LContentType := CONTENT_TYPE;
+
+  if THorseOctetStreamConfig.GetInstance.AcceptContentType.Count = 0 then
+    THorseOctetStreamConfig.GetInstance.AcceptContentType.Add(CONTENT_TYPE);
+
+  if (Req.MethodType in [mtPost, mtPut, mtPatch]) then
   begin
-    LContent := TMemoryStream.Create;
-    LContentTMemoryStream :=  TMemoryStream(LContent);
-    GetAllDataAsStream(Req, LContentTMemoryStream);
-    Req.Body(LContent);
+    if (MatchText(Req.RawWebRequest.ContentType, THorseOctetStreamConfig.GetInstance.AcceptContentType.ToArray)) then
+    begin
+      LContentType := Req.RawWebRequest.ContentType;
+      LContent := TMemoryStream.Create;
+      LContentTMemoryStream :=  TMemoryStream(LContent);
+      GetAllDataAsStream(Req, LContentTMemoryStream);
+      Req.Body(LContent);
+    end
+    else
+      raise EHorseException.New.Error('Unknown Content-Type: ' + Req.RawWebRequest.ContentType).Status(THTTPStatus.BadRequest);
   end;
 
   Next;
@@ -96,7 +116,7 @@ begin
     TStream(LContent).Position := 0;
 
     if Trim(Res.RawWebResponse.ContentType).IsEmpty then
-      Res.ContentType(CONTENT_TYPE);
+      Res.ContentType(LContentType);
 
     if Res.RawWebResponse.GetCustomHeader(CONTENT_DISPOSITION).IsEmpty then
       Res.RawWebResponse.SetCustomHeader(CONTENT_DISPOSITION, 'attachment');
@@ -110,7 +130,7 @@ begin
     TFileReturn(LContent).Stream.Position := 0;
 
     if Trim(Res.RawWebResponse.ContentType).IsEmpty then
-      Res.ContentType(CONTENT_TYPE);
+      Res.ContentType(LContentType);
 
     if TFileReturn(LContent).&Inline then
       Res.RawWebResponse.SetCustomHeader(CONTENT_DISPOSITION, 'inline; ' + 'filename="' + TFileReturn(LContent).Name + '"')

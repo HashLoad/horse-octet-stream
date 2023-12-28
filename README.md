@@ -65,7 +65,7 @@ var
 begin
   // Now you can send your stream:
   LStream := TFileStream.Create(ExtractFilePath(ParamStr(0)) + 'horse.pdf', fmOpenRead);
-  Res.Send<TStream>(LStream);
+  Res.Send<TStream>(LStream).ContentType('application/pdf');
 end;
 
 begin

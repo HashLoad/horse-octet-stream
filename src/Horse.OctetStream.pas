@@ -102,9 +102,7 @@ begin
       LContentTMemoryStream :=  TMemoryStream(LContent);
       GetAllDataAsStream(Req, LContentTMemoryStream);
       Req.Body(LContent);
-    end
-    else
-      raise EHorseException.New.Error('Unknown Content-Type: ' + Req.RawWebRequest.ContentType).Status(THTTPStatus.BadRequest);
+    end;
   end;
 
   Next;

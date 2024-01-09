@@ -38,6 +38,8 @@ begin
     var
       LType: string;
     begin
+      if not MatchText(Req.RawWebRequest.ContentType, THorseOctetStreamConfig.GetInstance.AcceptContentType.ToArray) then
+        raise EHorseException.New.Error('Unknown Content-Type: ' + Req.RawWebRequest.ContentType).Status(THTTPStatus.BadRequest);
       // here you could get the Req.ContentType and save the file based on that
       LType := Copy(Req.RawWebRequest.ContentType, Pos('/', Req.RawWebRequest.ContentType) + 1, Req.RawWebRequest.ContentType.Length);
       Req.Body<TBytesStream>.SaveToFile(ExtractFilePath(ParamStr(0)) + 'horse-post.' + LType);

@@ -45,7 +45,7 @@ implementation
 
 procedure GetAllDataAsStream(ARequest: THorseRequest; AStream: TMemoryStream);
 var
-{$IF DEFINED(FPC)}
+{$IF DEFINED(FPC) OR DEFINED(HORSE_APACHE)}
   LStringStream: TStringStream;
 {$ELSE}
   BytesRead, ContentLength: Integer;
@@ -53,8 +53,12 @@ var
 {$ENDIF}
 begin
   AStream.Clear;
-  {$IF DEFINED(FPC)}
+  {$IF DEFINED(FPC) OR DEFINED(HORSE_APACHE)}
+  {$IF DEFINED(HORSE_APACHE)}
+  LStringStream := TStringStream.Create(ARequest.RawWebRequest.RawContent);
+  {$ELSE}
   LStringStream := TStringStream.Create(ARequest.RawWebRequest.Content);
+  {$ENDIF}
   try
     LStringStream.SaveToStream(AStream);
   finally

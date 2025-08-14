@@ -49,7 +49,7 @@ begin
   THorse.Listen(9000,
     procedure
     begin
-      Writeln(Format('Server is runing on %s:%d', [THorse.Host, THorse.Port]));
+      Writeln(Format('Server is running on %s:%d', [THorse.Host, THorse.Port]));
       Readln;
     end);
 end.

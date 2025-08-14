@@ -36,7 +36,7 @@ begin
 
   // Add new ContentTypes to work with, the default is always application/octet-stream
   // Please, be careful of adding ContentTypes that exist
-  THorseOctetStream   Config.GetInstance.AcceptContentType.Add('application/pdf');
+  THorseOctetStreamConfig.GetInstance.AcceptContentType.Add('application/pdf');
 
   THorse.Get('/stream', GetStream);
   THorse.Post('/stream', PostStream);
